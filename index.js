@@ -1,5 +1,6 @@
 const express = require('express');
 const app = express();
+const jwt = require('jsonwebtoken');
 
 app.use(express.urlencoded({ extended:false }));
 app.use(express.json());
@@ -33,10 +34,10 @@ app.get('/', (req, res) => {
         <div class="div_iniciar">
             <form action="/auth" method="POST">
                 <label for="correo">Correo</label>
-                <input id="correo" type="text" name="email">
+                <input id="correo" type="text" name="email" type="email" maxlength="50">
                 <br>
                 <label for="contraseña">contraseña</label>
-                <input type="text" id="contraseña" name="password"> <br>
+                <input type="text" id="contraseña" name="password" type="password" maxlength="10"> <br>
                 <input type="submit" value="Iniciar sesión"/>
             </form>
             
@@ -60,14 +61,17 @@ app.get('/register', (req, res) => {
         <h1>Registrate</h1>
         <form action="/registrarse" method="POST">
             <label for="nombre">Nombre</label>
-            <input type="text" id="nombrereg" name="name">
+            <input type="text" id="nombrereg" name="name" type="text" maxlength="50">
             <br>
             <label for="correo">Correo</label>
-            <input id="correoreg" type="text" name="email">
+            <input id="correoreg" type="text" name="email" type="email" maxlength="50">
             <br>
             <label for="contraseña">contraseña</label>
             <input type="text" id="contraseñareg" name="password">
             <button type="submit">Registrarse</button>
+        </form>
+        <form action="/" method="GET">
+        <button type="submit">Volver</button>
         </form>
     </body>
     </html>`);
@@ -85,7 +89,7 @@ app.post('/registrarse', (req, res) => {
                         if (error) throw error;
                         console.log("registro exitoso");
                         // AQUI ES DONDE DEBO REDIRECCIONAR HACIA LA PÁGINA PRINCIPAL
-                        // app.connect('/')
+                        res.redirect("/");
                     })
                 }else{
                     res.send(`<!DOCTYPE html>
@@ -142,7 +146,9 @@ app.post('/registrarse', (req, res) => {
         
         });
 
-app.get('/actualizarDatos', (req, res) => {
+app.post('/actualizarDatos', (req, res) => {
+    const {consulta} = res.get('id_user');
+    console.log("La consulta es: "+consulta);
     res.send(`<!DOCTYPE html>
     <html lang="en">
     <head>
@@ -183,7 +189,8 @@ app.post('/auth', (req, res) => {
             if(consulta.admin==0){
                 if(consulta.estado==1){
                     console.log("usuario común")
-                    res.send("USUARIO COMÚN");
+                    res.set({'id_user': consulta.id});
+                    res.redirect(307, "/actualizarDatos");
                 }
                 else{
                     console.log("usuario desactivado")
