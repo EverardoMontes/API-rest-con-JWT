@@ -5,7 +5,7 @@ const jwt = require('jsonwebtoken');
 const cookieParser = require('cookie-parser');
 const session = require('express-session');
 require("dotenv").config();
-
+const rateLimit = require('express-rate-limit');
 app.use(express.urlencoded({ extended:false }));
 app.use(express.json());
 app.use(cookieParser())
@@ -14,7 +14,22 @@ app.use(session({
     resave: false,
     saveUninitialized: true
   }));
-let mysql = require('mysql');
+//teóricamente prácticas seguras
+app.use((req, res, next) => {
+    req.setTimeout(5000); // Set request timeout to 5 seconds
+    res.setTimeout(5000); // Set response timeout to 5 seconds
+    next();
+  });
+const limiter = rateLimit({
+    windowMs: 15 * 60 * 1000, // 15 minutes
+    max: 100, // Limit each IP to 100 requests per `window` (here, per 15 minutes)
+    standardHeaders: true, // Return rate limit info in the `RateLimit-*` headers
+    legacyHeaders: false, // Disable the `X-RateLimit-*` headers
+  });
+  
+  app.use(limiter);
+
+let mysql = require('mysql2');
 let conexionBD = mysql.createConnection({
      host: 'localhost',
      database: 'practica1',
@@ -89,14 +104,14 @@ app.post('/registrarse', (req, res) => {
     const {email, password, name} = req.body;
     let consulta;
     if (email != null && password != null && name != null){
-        let usuario = conexionBD.query("SELECT * FROM users WHERE correo='"+email+"'", function (error, results, fields) {
+        conexionBD.query("SELECT * FROM users WHERE correo='"+email+"'", function (error, results, fields) {
             if (error) throw error;
             consulta = results[0];
             if(consulta == 0 || consulta==undefined){
-                    console.log("registro")
+                    
                     let registro = conexionBD.query("INSERT INTO users(nombre, correo, pass, admin, estado) values ('"+name+"','"+email+"','"+password+"',0,0)", function (error, results, fields) {
                         if (error) throw error;
-                        console.log("registro exitoso");
+                        
                         // AQUI ES DONDE DEBO REDIRECCIONAR HACIA LA PÁGINA PRINCIPAL
                         res.redirect("/");
                     })
@@ -155,9 +170,7 @@ app.post('/registrarse', (req, res) => {
         
         });
 
-app.get('/actualizarDatos', 
-validateToken,
- (req, res) => {
+app.get('/actualizarDatos', validateToken, (req, res) => {
     jwt.verify(req.cookies.token, process.env.SECRET, (err, authData) => {
         if (err) {
           res.sendStatus(403);
@@ -181,14 +194,14 @@ validateToken,
                         <h1>Actualiza tus datos usuario</h1>
                         <form action="/update" method="POST">
                             <label for="nombre">Nombre</label>
-                            <input type="text" id="nombrereg" value=${usuarioData.nombre}>
+                            <input type="text" id="nombrereg" value=${usuarioData.nombre} name="nombre">
                             <br>
                             <label for="correo">Correo</label>
-                            <input id="correoreg" type="text" value=${usuarioData.correo}>
+                            <input id="correoreg" type="text" value=${usuarioData.correo} name="correo">
                             <br>
                             <label for="contraseña">contraseña</label>
-                            <input type="text" id="contraseñareg" value=${usuarioData.pass}>
-                            <input type="submit" value="Actualizar datos"/>
+                            <input type="text" id="contraseñareg" value=${usuarioData.pass} name="pass">
+                            <button type="submit">Actualizar datos</button>
                         </form>
                         <form action="/">
                             <input type="submit" value="Cerrar sesión"/>
@@ -208,8 +221,8 @@ app.post('/update',validateToken,(req, res) => {
             }
             else{
                 let id=req.session.myId;
-                let usrData=req.session.usrData
-                console.log(req.body.nombre);
+                let usrData=req.body;
+               
                  conexionBD.query("UPDATE users SET nombre='"+usrData.nombre+"', correo='"+usrData.correo+"', pass='"+usrData.pass+"' WHERE id="+id+";", function (error, results, fields) {
                       if (error) throw error;
                       
@@ -389,13 +402,13 @@ app.post('/auth', (req, res) => {
                     
                 }
                 else{
-                    console.log("usuario desactivado")
+                    
                     res.send("USUARIO DESACTIVADO");
                 }
                 
             }
             if(consulta.admin==1){
-                console.log("usuario administrador")
+                
                 res.cookie("token", accessToken, {
                     httpOnly: true
                 })
