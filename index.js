@@ -15,19 +15,6 @@ app.use(session({
     saveUninitialized: true
   }));
 //teóricamente prácticas seguras
-app.use((req, res, next) => {
-    req.setTimeout(5000); // Set request timeout to 5 seconds
-    res.setTimeout(5000); // Set response timeout to 5 seconds
-    next();
-  });
-const limiter = rateLimit({
-    windowMs: 15 * 60 * 1000, // 15 minutes
-    max: 100, // Limit each IP to 100 requests per `window` (here, per 15 minutes)
-    standardHeaders: true, // Return rate limit info in the `RateLimit-*` headers
-    legacyHeaders: false, // Disable the `X-RateLimit-*` headers
-  });
-  
-  app.use(limiter);
 
 let mysql = require('mysql2');
 let conexionBD = mysql.createConnection({
@@ -61,7 +48,7 @@ app.get('/', (req, res) => {
                 <input id="correo" type="text" name="email" type="email" maxlength="50">
                 <br>
                 <label for="contraseña">contraseña</label>
-                <input type="password" id="contraseña" name="password" type="password" maxlength="10"> <br>
+                <input type="password" id="contraseña" name="password" type="password" maxlength="50"> <br>
                 <input type="submit" value="Iniciar sesión"/>
             </form>
             
@@ -103,13 +90,17 @@ app.get('/register', (req, res) => {
 app.post('/registrarse', (req, res) => {
     const {email, password, name} = req.body;
     let consulta;
-    if (email != null && password != null && name != null){
-        conexionBD.query("SELECT * FROM users WHERE correo='"+email+"'", function (error, results, fields) {
+    if (email != null && password != null && name != null && email != "" && password !="" && name != ""){
+        //Esta es la forma que hacía antes
+        //conexionBD.query("SELECT * FROM users WHERE correo='"+email+"'", function (error, results, fields) {
+            let query="SELECT * FROM users WHERE correo=?";
+        conexionBD.query(query,[email], function (error, results, fields) {
             if (error) throw error;
             consulta = results[0];
             if(consulta == 0 || consulta==undefined){
-                    
-                    let registro = conexionBD.query("INSERT INTO users(nombre, correo, pass, admin, estado) values ('"+name+"','"+email+"','"+password+"',0,0)", function (error, results, fields) {
+                    let query ="INSERT INTO users(nombre, correo, pass, admin, estado) values (?,?,?,0,0)" ;
+                    //conexionBD.query("INSERT INTO users(nombre, correo, pass, admin, estado) values ('"+name+"','"+email+"','"+password+"',0,0)", function (error, results, fields) {
+                    conexionBD.query(query,[name, email, password], function (error, results, fields) {
                         if (error) throw error;
                         
                         // AQUI ES DONDE DEBO REDIRECCIONAR HACIA LA PÁGINA PRINCIPAL
@@ -137,6 +128,9 @@ app.post('/registrarse', (req, res) => {
                             <button type="submit">Registrarse</button>
                         </form>
                         <h2>YA EXISTE UNA CUENTA ASOCIADA A ESE CORREO</h2>
+                        <form action="/" method="GET">
+        <button type="submit">Volver</button>
+        </form>
                     </body>
                     </html>`); 
                 }
@@ -164,6 +158,9 @@ app.post('/registrarse', (req, res) => {
                                 <button type="submit">Registrarse</button>
                             </form>
                             <h2>HAY ALGÚN CAMPO EN BLANCO</h2>
+                            <form action="/" method="GET">
+        <button type="submit">Volver</button>
+        </form>
                         </body>
                         </html>`);
         }
@@ -177,8 +174,9 @@ app.get('/actualizarDatos', validateToken, (req, res) => {
          
         } else {
             let id = req.session.myId;
-            
-            let usuario = conexionBD.query("SELECT * FROM users WHERE id="+id+" AND admin=0;", function (error, results, fields) {
+            let query ="SELECT * FROM users WHERE id=? AND admin=0;" ;
+            //conexionBD.query("SELECT * FROM users WHERE id="+id+" AND admin=0;", function (error, results, fields) {
+            conexionBD.query(query,[id], function (error, results, fields) {
                 if (error) throw error;
                 let usuarioData = results[0];
                 req.session.usrData=results[0];
@@ -222,8 +220,9 @@ app.post('/update',validateToken,(req, res) => {
             else{
                 let id=req.session.myId;
                 let usrData=req.body;
-               
-                 conexionBD.query("UPDATE users SET nombre='"+usrData.nombre+"', correo='"+usrData.correo+"', pass='"+usrData.pass+"' WHERE id="+id+";", function (error, results, fields) {
+                let query = "UPDATE users SET nombre=?, correo=?, pass=? WHERE id=?;"
+                //conexionBD.query("UPDATE users SET nombre='"+usrData.nombre+"', correo='"+usrData.correo+"', pass='"+usrData.pass+"' WHERE id="+id+";", function (error, results, fields) {
+                 conexionBD.query(query,[usrData.nombre,usrData.correo,usrData.pass,id], function (error, results, fields) {
                       if (error) throw error;
                       
                       return res.redirect('/actualizarDatos')});
@@ -249,8 +248,9 @@ app.post('/estadoUsr',validateToken,(req, res) => {
                     id=req.body.desactivar
                 }
                  
-                
-                let usuario = conexionBD.query("UPDATE users SET estado ="+state+" WHERE id="+id+";", function (error, results, fields) {
+                let query ="UPDATE users SET estado =? WHERE id=?";
+                //conexionBD.query("UPDATE users SET estado ="+state+" WHERE id="+id+";", function (error, results, fields) {
+                conexionBD.query(query,[state,id], function (error, results, fields) {
                      if (error) throw error;
                      
                      return res.redirect('/panelAdmin')});
@@ -258,9 +258,7 @@ app.post('/estadoUsr',validateToken,(req, res) => {
             }
         })
 })
-app.get('/panelAdmin', 
-validateToken,
- (req, res) => {
+app.get('/panelAdmin', validateToken,(req, res) => {
     jwt.verify(req.cookies.token, process.env.SECRET, (err, authData) => {
         if (err) {
           res.sendStatus(403);
@@ -381,11 +379,16 @@ function generateAccessToken(user){
 app.post('/auth', (req, res) => {
     // console.log(req.body);
     const {email, password} = req.body;
-    let consulta;
-    let usuario = conexionBD.query("SELECT * FROM users WHERE correo='"+email+"' AND pass='"+password+"'", function (error, results, fields) {
-        if (error) throw error;
-        consulta = results[0];
-        let idconsulta = consulta.id;
+    let query = "SELECT * FROM users WHERE correo=? AND pass=?"
+    //conexionBD.query("SELECT * FROM users WHERE correo='"+email+"' AND pass='"+password+"'",(error, results)=> {
+    conexionBD.query(query,[email, password],(error, results)=> {
+        if (error){
+            console.error('Error:', error);
+            return res.status(500).json({ error: 'Error query' });
+          }
+          let consulta = results[0];
+          try {
+            let idconsulta = consulta.id;
         if(consulta != 0 && consulta!=undefined){
             //AQUI INICIA JWT
             const user= {email:email, admin:consulta.admin};
@@ -416,9 +419,14 @@ app.post('/auth', (req, res) => {
                 return res.redirect("/panelAdmin");
             }
             
-        }else{
+        }
+        else{
             res.redirect("/");
         }
+          } catch (error) {
+            res.redirect("/");
+          }
+        
       });
     
     
