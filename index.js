@@ -14,7 +14,7 @@ app.use(session({
     resave: false,
     saveUninitialized: true
   }));
-//teóricamente prácticas seguras
+
 
 let mysql = require('mysql2');
 let conexionBD = mysql.createConnection({
@@ -33,6 +33,8 @@ conexionBD.connect(function(err){
 
 });
 app.get('/', (req, res) => {
+    let papa = "hola mundo"
+    console.log(papa.length)
     res.send(`<!DOCTYPE html>
     <html lang="en">
     <head>
@@ -91,8 +93,7 @@ app.post('/registrarse', (req, res) => {
     const {email, password, name} = req.body;
     let consulta;
     if (email != null && password != null && name != null && email != "" && password !="" && name != ""){
-        //Esta es la forma que hacía antes
-        //conexionBD.query("SELECT * FROM users WHERE correo='"+email+"'", function (error, results, fields) {
+        if(email.length>=4 && password.length>=4&& name.length>=4){
             let query="SELECT * FROM users WHERE correo=?";
         conexionBD.query(query,[email], function (error, results, fields) {
             if (error) throw error;
@@ -118,13 +119,13 @@ app.post('/registrarse', (req, res) => {
                         <h1>Registrate</h1>
                         <form action="/registrarse" method="POST">
                             <label for="nombre">Nombre</label>
-                            <input type="text" id="nombrereg" name="name">
+                            <input type="text" id="nombrereg" name="name"required minlength="5">
                             <br>
                             <label for="correo">Correo</label>
-                            <input id="correoreg" type="text" name="email">
+                            <input id="correoreg" type="text" name="email"required minlength="5">
                             <br>
                             <label for="contraseña">contraseña</label>
-                            <input type="text" id="contraseñareg" name="password">
+                            <input type="text" id="contraseñareg" name="password" required minlength="5">
                             <button type="submit">Registrarse</button>
                         </form>
                         <h2>YA EXISTE UNA CUENTA ASOCIADA A ESE CORREO</h2>
@@ -136,7 +137,10 @@ app.post('/registrarse', (req, res) => {
                 }
                 
             })
-        }else{
+        }
+    }
+            
+        else{
             res.send(`<!DOCTYPE html>
                         <html lang="en">
                         <head>
@@ -148,16 +152,16 @@ app.post('/registrarse', (req, res) => {
                             <h1>Registrate</h1>
                             <form action="/registrarse" method="POST">
                                 <label for="nombre">Nombre</label>
-                                <input type="text" id="nombrereg" name="name">
+                                <input type="text" id="nombrereg" name="name"required minlength="5">
                                 <br>
                                 <label for="correo">Correo</label>
-                                <input id="correoreg" type="text" name="email">
+                                <input id="correoreg" type="text" name="email"required minlength="5">
                                 <br>
                                 <label for="contraseña">contraseña</label>
-                                <input type="text" id="contraseñareg" name="password">
+                                <input type="text" id="contraseñareg" name="password"required minlength="5">
                                 <button type="submit">Registrarse</button>
                             </form>
-                            <h2>HAY ALGÚN CAMPO EN BLANCO</h2>
+                            <h2>HAY ALGÚN CAMPO EN BLANCO O TE FALTAN CARACTERES</h2>
                             <form action="/" method="GET">
         <button type="submit">Volver</button>
         </form>
@@ -172,7 +176,7 @@ app.get('/actualizarDatos', validateToken, (req, res) => {
         if (err) {
           res.sendStatus(403);
          
-        } else {
+        } else if(req.isAdmin==0){
             let id = req.session.myId;
             let query ="SELECT * FROM users WHERE id=? AND admin=0;" ;
             //conexionBD.query("SELECT * FROM users WHERE id="+id+" AND admin=0;", function (error, results, fields) {
@@ -192,13 +196,13 @@ app.get('/actualizarDatos', validateToken, (req, res) => {
                         <h1>Actualiza tus datos usuario</h1>
                         <form action="/update" method="POST">
                             <label for="nombre">Nombre</label>
-                            <input type="text" id="nombrereg" value=${usuarioData.nombre} name="nombre">
+                            <input type="text" id="nombrereg" value=${usuarioData.nombre} name="nombre" required minlength="5">
                             <br>
                             <label for="correo">Correo</label>
-                            <input id="correoreg" type="text" value=${usuarioData.correo} name="correo">
+                            <input id="correoreg" type="text" value=${usuarioData.correo} name="correo" required minlength="5">
                             <br>
                             <label for="contraseña">contraseña</label>
-                            <input type="text" id="contraseñareg" value=${usuarioData.pass} name="pass">
+                            <input type="text" id="contraseñareg" value=${usuarioData.pass} name="pass" required minlength="5">
                             <button type="submit">Actualizar datos</button>
                         </form>
                         <form action="/">
@@ -207,6 +211,9 @@ app.get('/actualizarDatos', validateToken, (req, res) => {
                     </body>
                     </html>`);
                 });
+            }
+            else{
+                res.redirect("/");
             }
       });
     
@@ -218,14 +225,27 @@ app.post('/update',validateToken,(req, res) => {
              
             }
             else{
-                let id=req.session.myId;
-                let usrData=req.body;
-                let query = "UPDATE users SET nombre=?, correo=?, pass=? WHERE id=?;"
-                //conexionBD.query("UPDATE users SET nombre='"+usrData.nombre+"', correo='"+usrData.correo+"', pass='"+usrData.pass+"' WHERE id="+id+";", function (error, results, fields) {
-                 conexionBD.query(query,[usrData.nombre,usrData.correo,usrData.pass,id], function (error, results, fields) {
-                      if (error) throw error;
-                      
-                      return res.redirect('/actualizarDatos')});
+                        let id=req.session.myId;
+                        let usrData=req.body;
+                if(usrData.nombre!= "" && usrData.correo!="" && usrData.pass!="" && id!="" && usrData){
+                    try {
+                        
+                        let query = "UPDATE users SET nombre=?, correo=?, pass=? WHERE id=?;"
+                    //conexionBD.query("UPDATE users SET nombre='"+usrData.nombre+"', correo='"+usrData.correo+"', pass='"+usrData.pass+"' WHERE id="+id+";", function (error, results, fields) {
+                     conexionBD.query(query,[usrData.nombre,usrData.correo,usrData.pass,id], function (error, results, fields) {
+                          if (error) throw error;
+                          
+                          return res.redirect('/actualizarDatos')});
+                        
+                    } catch (error) {
+                        
+                    }
+                    
+                }
+                else{
+                    return res.redirect('/actualizarDatos');
+                }
+                
                 
             }
         })
@@ -263,7 +283,9 @@ app.get('/panelAdmin', validateToken,(req, res) => {
         if (err) {
           res.sendStatus(403);
          
-        } else {
+        } 
+        
+        else if(req.isAdmin==1){
             let usuario = conexionBD.query("SELECT * FROM users WHERE admin=0", function (error, results, fields) {
                 if (error) throw error;
                 //console.log('The solution is: ', results[0])
@@ -349,11 +371,10 @@ app.get('/panelAdmin', validateToken,(req, res) => {
 
             });
 
-        //   res.json({
-        //     message: 'Protected data accessed',
-        //     authData
-        //   });
-        
+        }
+
+            else {
+                res.redirect("/")
         }
       });
     
@@ -367,14 +388,17 @@ function generateAccessToken(user){
          const token = req.cookies.token;
          try{
             const user = jwt.verify(token, process.env.SECRET);
+            console.log(user)
             req.user = user;
-            next();
+            req.isAdmin = user.admin;
+            return next();
          }
          catch(err){
             res.clearCookie('token');
             return res.redirect('/');
          }
     }
+
 
 app.post('/auth', (req, res) => {
     // console.log(req.body);
@@ -389,11 +413,13 @@ app.post('/auth', (req, res) => {
           let consulta = results[0];
           try {
             let idconsulta = consulta.id;
+            const user= {email:email, admin:consulta.admin};
         if(consulta != 0 && consulta!=undefined){
             //AQUI INICIA JWT
-            const user= {email:email, admin:consulta.admin};
-            const accessToken = generateAccessToken(user)
+            
             if(consulta.admin==0){
+                
+                const accessToken = generateAccessToken(user)
                 if(consulta.estado==1){
                     //AQUI ESTÁ LA MÁGIA PERRÍN
                     res.cookie("token", accessToken, {
@@ -411,7 +437,7 @@ app.post('/auth', (req, res) => {
                 
             }
             if(consulta.admin==1){
-                
+                const accessToken = generateAccessToken(user);
                 res.cookie("token", accessToken, {
                     httpOnly: true
                 })
