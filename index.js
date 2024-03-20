@@ -33,8 +33,6 @@ conexionBD.connect(function(err){
 
 });
 app.get('/', (req, res) => {
-    let papa = "hola mundo"
-    console.log(papa.length)
     res.send(`<!DOCTYPE html>
     <html lang="en">
     <head>
@@ -47,10 +45,10 @@ app.get('/', (req, res) => {
         <div class="div_iniciar">
             <form action="/auth" method="POST">
                 <label for="correo">Correo</label>
-                <input id="correo" type="text" name="email" type="email" maxlength="50">
+                <input id="correo" name="email" type="email" maxlength="50" required>
                 <br>
                 <label for="contraseña">contraseña</label>
-                <input type="password" id="contraseña" name="password" type="password" maxlength="50"> <br>
+                <input type="password" id="contraseña" name="password" type="password" maxlength="50" required> <br>
                 <input type="submit" value="Iniciar sesión"/>
             </form>
             
@@ -173,6 +171,7 @@ app.post('/registrarse', (req, res) => {
 
 app.get('/actualizarDatos', validateToken, (req, res) => {
     jwt.verify(req.cookies.token, process.env.SECRET, (err, authData) => {
+
         if (err) {
           res.sendStatus(403);
          
@@ -388,7 +387,6 @@ function generateAccessToken(user){
          const token = req.cookies.token;
          try{
             const user = jwt.verify(token, process.env.SECRET);
-            console.log(user)
             req.user = user;
             req.isAdmin = user.admin;
             return next();
@@ -404,7 +402,6 @@ app.post('/auth', (req, res) => {
     // console.log(req.body);
     const {email, password} = req.body;
     let query = "SELECT * FROM users WHERE correo=? AND pass=?"
-    //conexionBD.query("SELECT * FROM users WHERE correo='"+email+"' AND pass='"+password+"'",(error, results)=> {
     conexionBD.query(query,[email, password],(error, results)=> {
         if (error){
             console.error('Error:', error);
@@ -427,6 +424,7 @@ app.post('/auth', (req, res) => {
                     })
                     //anclar id a sesiones
                     req.session.myId=idconsulta;
+                    
                     return res.redirect("/actualizarDatos");
                     
                 }
