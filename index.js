@@ -4,7 +4,7 @@ const app = express();
 const jwt = require('jsonwebtoken');
 const cookieParser = require('cookie-parser');
 const session = require('express-session');
-require("dotenv").config();
+require("dotenv").config({path:'./.env'});
 const rateLimit = require('express-rate-limit');
 app.use(express.urlencoded({ extended:false }));
 app.use(express.json());
@@ -18,10 +18,10 @@ app.use(session({
 
 let mysql = require('mysql2');
 let conexionBD = mysql.createConnection({
-     host: 'localhost',
-     database: 'practica1',
-     user:'root',
-     password:''
+     host: process.env.DB_HOST || 'localhost',
+     database: process.env.DB_DATABASE || 'practica1',
+     user:process.env.DB_USER || 'root',
+     password:process.env.DB_PASS || ''
 })
 
 conexionBD.connect(function(err){
@@ -462,7 +462,7 @@ app.post('/auth', (req, res) => {
 //     console.log('The solution is: ', results[0].solution);
 //   });
 
-
-app.listen(3000, ()=>{
-    console.log("servidor iniciado en 3000")
+const puerto = process.env.PORT || 3000;
+app.listen(puerto, ()=>{
+    console.log("servidor iniciado en "+ puerto)
 })
