@@ -15,7 +15,7 @@ app.use(session({
     saveUninitialized: true
   }));
 
-console.log("PEPITOO CONSOLE LOG "+ process.env.DB_DATABASE);
+console.log("PEPITOO CONSOLE LOG "+ process.env.DB_HOST);
 let mysql = require('mysql2');
 let conexionBD = mysql.createConnection({
      host: process.env.DB_HOST,
