@@ -21,7 +21,10 @@ let conexionBD = mysql.createConnection({
      host: process.env.DB_HOST,
      database: process.env.DB_DATABASE,
      user:process.env.DB_USER,
-     password:process.env.DB_PASS
+     password:process.env.DB_PASS,
+     waitForConnections: true,
+     connectionLimit: 10,
+     queueLimit: 0
 })
 
 conexionBD.connect(function(err){
