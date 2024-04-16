@@ -33,32 +33,307 @@ conexionBD.connect(function(err){
 
 });
 app.get('/', (req, res) => {
-    res.send(`<!DOCTYPE html>
-    <html lang="en">
-    <head>
-        <meta charset="UTF-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>Autentificador</title>
-    </head>
-    <body>
-        <h1>Iniciar sesión</h1>
-        <div class="div_iniciar">
-            <form action="/auth" method="POST">
-                <label for="correo">Correo</label>
-                <input id="correo" name="email" type="email" maxlength="50" required>
-                <br>
-                <label for="contraseña">contraseña</label>
-                <input type="password" id="contraseña" name="password" type="password" maxlength="50" required> <br>
-                <input type="submit" value="Iniciar sesión"/>
+        res.send(`<!DOCTYPE html>
+        <html lang="en">
+        <head>
+            <meta charset="UTF-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <title>Autentificador</title>
+        </head>
+        <body>
+            <h1>Iniciar sesión</h1>
+            <div class="div_iniciar">
+                <form action="/auth" method="POST">
+                    <label for="correo">Correo</label>
+                    <input id="correo" name="email" type="email" maxlength="50" required>
+                    <br>
+                    <label for="contraseña">contraseña</label>
+                    <input type="password" id="contraseña" name="password" type="password" maxlength="50" required> <br>
+                    <input type="submit" value="Iniciar sesión"/>
+                </form>
+                
+            </div>
+            <form action="/register">
+                <input type="submit" value="Registrarse"/>
             </form>
-            
-        </div>
-        <form action="/register">
-            <input type="submit" value="Registrarse"/>
-        </form>
-    </body>
-    </html>`);
+        </body>
+        </html>`);
+    
 });
+
+app.get('/logged', validateToken, (req, res) => {
+    jwt.verify(req.cookies.token, process.env.SECRET, (err, authData) => {
+        if (err) {
+          res.sendStatus(403);
+        }
+        else if(req.isAdmin==0){
+            res.send(`<!DOCTYPE html>
+            <html lang="en">
+            <head>
+                <meta charset="UTF-8">
+                <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                <title>Cliente</title>
+            </head>
+            <body>
+                <h1>Sesión de cliente</h1>
+                <div class="div_iniciar">
+                    <form action="/actualizarDatos" method="GET">
+                        <input type="submit" value="Actualizar datos"/>
+                    </form>
+                    <form action="/showProducts" method="GET">
+                        <input type="submit" value="Ver productos a la venta"/>
+                    </form>
+                    <form action="/">
+                            <input type="submit" value="Cerrar sesión"/>
+                        </form>
+                    
+                </div>
+            </body>
+            </html>`);
+        }
+        else if(req.isAdmin==1){
+            res.send(`<!DOCTYPE html>
+            <html lang="en">
+            <head>
+                <meta charset="UTF-8">
+                <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                <title>Administrador</title>
+            </head>
+            <body>
+                <h1>Sesión de administrador</h1>
+                <div class="div_iniciar">
+                    <form action="/panelAdmin" method="GET">
+                        <input type="submit" value="Panel de Administrador"/>
+                    </form>
+                    <form action="/addProducts" method="POST">
+                        <input type="submit" value="Introducir un producto"/>
+                    </form>
+                    <form action="/showProducts" method="GET">
+                        <input type="submit" value="Ver productos a la venta"/>
+                    </form>
+                    <form action="/">
+                            <input type="submit" value="Cerrar sesión"/>
+                        </form>
+                    
+                </div>
+            </body>
+            </html>`);
+        }
+    })
+    
+    
+});
+
+app.post("/addProducts",validateToken, (req, res) => {
+    jwt.verify(req.cookies.token, process.env.SECRET, (err, authData) => {
+        console.log("entramos a addproducts admin es "+req.isAdmin);
+        if (err) {
+          res.sendStatus(403);
+        }
+
+        else if(req.isAdmin==1){
+            res.send(`<!DOCTYPE html>
+                <html lang="en">
+                <head>
+                    <meta charset="UTF-8">
+                    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                    <title>Añadir producto</title>
+                </head>
+                <body>
+                    <h1>Añadir un producto</h1>
+                    <form action="/addProductMethod" method="POST">
+                        <label for="nombreProducto">Nombre del producto</label>
+                        <input type="text" id="producName" name="nombreProducto" type="text" maxlength="50" placeholder="Plátano">
+                        <br>
+                        <label for="descripcionProducto">Descripción del producto</label>
+                        <input id="producDesc" type="text" name="descripcionProducto" type="email" maxlength="300" placeholder="Amarillo, largo y pelable">
+                        <br>
+                        <label for="cantidadProducto">Cantidad de este producto</label>
+                        <input type="number" id="producCuant" name="cantidadProducto" placeholder="50">
+                        <br>
+                        <label for="precioProducto">Precio que tendrá el producto</label>
+                        <input type="number" id="productPrice" name="precioProducto" placeholder="20">
+                        <br>
+                        <label for="imagenProducto">Imagen que tendrá el producto</label>
+                        <input type="url" id="producImage" name="imagenProducto" placeholder="https://www.google.com/PlatanoImage" size="30">
+                        <br>
+                        <button type="submit">Registrar el producto</button>
+                    </form>
+                    <form action="/logged" method="GET">
+                    <button type="submit">Volver</button>
+                    </form>
+                </body>
+                </html>`);
+        }
+    })
+})
+
+app.post('/addProductMethod',  (req, res) => {
+    const {nombreProducto, descripcionProducto, cantidadProducto,precioProducto,imagenProducto} = req.body;
+    let consulta;
+    if (cantidadProducto == Number && precioProducto == Number && nombreProducto != null && descripcionProducto != null && cantidadProducto != null && precioProducto != null && imagenProducto != null && nombreProducto != "" && descripcionProducto != "" && cantidadProducto != "" && precioProducto != "" && imagenProducto != ""){
+        if(true){
+            let query="SELECT * FROM productos WHERE nombre=?";
+        conexionBD.query(query,[nombreProducto], function (error, results, fields) {
+            if (error) throw error;
+            consulta = results[0];
+            if(consulta == 0 || consulta==undefined){
+                    let query ="INSERT INTO productos(nombre, descripcion, cantidad, precio, imagen) values (?,?,?,?,?)" ;
+                    //conexionBD.query("INSERT INTO users(nombre, correo, pass, admin, estado) values ('"+name+"','"+email+"','"+password+"',0,0)", function (error, results, fields) {
+                    conexionBD.query(query,[nombreProducto, descripcionProducto, cantidadProducto,precioProducto,imagenProducto], function (error, results, fields) {
+                        if (error) throw error;
+                        
+                        // AQUI ES DONDE DEBO REDIRECCIONAR HACIA LA PÁGINA PRINCIPAL
+                        res.redirect("/logged");
+                    })
+                }else{
+                    res.send(`<!DOCTYPE html>
+                    <html lang="en">
+                    <head>
+                        <meta charset="UTF-8">
+                        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                        <title>Registrarse</title>
+                    </head>
+                    <body>
+                    <h1>Añadir un producto</h1>
+                    <form action="/addProductMethod" method="POST">
+                        <label for="nombreProducto">Nombre del producto</label>
+                        <input type="text" id="producName" name="nombreProducto" type="text" maxlength="50" placeholder="Plátano">
+                        <br>
+                        <label for="descripcionProducto">Descripción del producto</label>
+                        <input id="producDesc" type="text" name="descripcionProducto" type="email" maxlength="300" placeholder="Amarillo, largo y pelable">
+                        <br>
+                        <label for="cantidadProducto">Cantidad de este producto</label>
+                        <input type="number" id="producCuant" name="cantidadProducto" placeholder="50">
+                        <br>
+                        <label for="precioProducto">Precio que tendrá el producto</label>
+                        <input type="number" id="productPrice" name="precioProducto" placeholder="20">
+                        <br>
+                        <label for="imagenProducto">Imagen que tendrá el producto</label>
+                        <input type="url" id="producImage" name="imagenProducto" placeholder="www.google.com/PlatanoImage" size="30">
+                        <br>
+                        <button type="submit">Registrar el producto</button>
+                    </form>
+                        <h2>YA EXISTE ESE PRODUCTO EN LA LISTA</h2>
+                        <form action="/logged" method="GET">
+                            <button type="submit">Volver</button>
+                        </form>
+                    </body>
+                    </html>`); 
+                }
+                
+            })
+        }
+    }
+            
+        else{
+            res.send(`<!DOCTYPE html>
+                        <html lang="en">
+                        <head>
+                            <meta charset="UTF-8">
+                            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                            <title>Registrarse</title>
+                        </head>
+                        <body>
+                        <h1>Añadir un producto</h1>
+                        <form action="/addProductMethod" method="POST">
+                            <label for="nombreProducto">Nombre del producto</label>
+                            <input type="text" id="producName" name="nombreProducto" type="text" maxlength="50" placeholder="Plátano">
+                            <br>
+                            <label for="descripcionProducto">Descripción del producto</label>
+                            <input id="producDesc" type="text" name="descripcionProducto" type="email" maxlength="300" placeholder="Amarillo, largo y pelable">
+                            <br>
+                            <label for="cantidadProducto">Cantidad de este producto</label>
+                            <input type="number" id="producCuant" name="cantidadProducto" placeholder="50">
+                            <br>
+                            <label for="precioProducto">Precio que tendrá el producto</label>
+                            <input type="number" id="productPrice" name="precioProducto" placeholder="20">
+                            <br>
+                            <label for="imagenProducto">Imagen que tendrá el producto</label>
+                            <input type="url" id="producImage" name="imagenProducto" placeholder="www.google.com/PlatanoImage" size="30">
+                            <br>
+                            <button type="submit">Registrar el producto</button>
+                        </form>
+                            <h2>HAY ALGÚN CAMPO EN BLANCO!</h2>
+                            <form action="/logged" method="GET">
+                                <button type="submit">Volver</button>
+                            </form>
+                        </body>
+                        </html>`);
+        }
+        
+        });
+
+app.get("/showProducts", validateToken, (req, res) => {
+    jwt.verify(req.cookies.token, process.env.SECRET, (err, authData) => {
+        if (err) {
+          res.sendStatus(403);
+        }
+        conexionBD.query("SELECT * FROM productos", function (error, results, fields) {
+            if (error) throw error;
+            //console.log('The solution is: ', results[0])
+            let productos = results;
+            //res.sendFile(__dirname+'/admin.html');
+            res.send(`<!DOCTYPE html>
+            <html lang="en">
+                <head>
+                    <meta charset="UTF-8">
+                    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                    <title>Productos</title>
+                </head>
+                <body>
+                    <h1>Productos en venta en esta tienda</h1>
+                    <table class="default" id="tableUsers" border="3">
+                        <tr>
+                            <th>Id</th>
+                            <th>Nombre del producto</th>
+                            <th>Descripción del producto</th>
+                            <th>Cantidad en existencia</th>
+                            <th>Precio del producto</th>
+                            <th>Imagen del producto</th>
+                        </tr>           
+                    </table>
+                                
+                    <form action="/logged">
+                        <input type="submit" value="Volver"/>
+                    </form>
+                </body>
+            </html>
+            <script>
+                let usrs = ${JSON.stringify(productos)}
+                let tabla = document.getElementById("tableUsers");
+                usrs.forEach((element)=>{
+                    let tr = document.createElement('tr');
+                    let tdId = document.createElement('td');
+                    let tdnombre = document.createElement('td');
+                    let tdDesc = document.createElement('td');
+                    let tdCant = document.createElement('td');
+                    let tdPrecio = document.createElement('td');
+                    let tdimage = document.createElement('td');
+                    let image = document.createElement('img');
+                    tdId.textContent = element.id;
+                    tdnombre.textContent = element.nombre;
+                    tdDesc.textContent = element.descripcion;
+                    tdCant.textContent = element.cantidad;
+                    tdPrecio.textContent = element.precio;
+                    image.src = element.imagen;
+                    image.width="200"
+                    image.height="100"
+                    tdimage.appendChild(image);
+                    tr.appendChild(tdId);
+                    tr.appendChild(tdnombre);
+                    tr.appendChild(tdDesc);
+                    tr.appendChild(tdCant);
+                    tr.appendChild(tdPrecio);
+                    tr.appendChild(tdimage);
+                    tableUsers.appendChild(tr);
+                    })
+                </script>
+            `);
+
+        });
+    })
+})
 
 app.get('/register', (req, res) => {
     res.send(`<!DOCTYPE html>
@@ -71,14 +346,15 @@ app.get('/register', (req, res) => {
     <body>
         <h1>Registrate</h1>
         <form action="/registrarse" method="POST">
-            <label for="nombre">Nombre</label>
+            <label for="name">Nombre</label>
             <input type="text" id="nombrereg" name="name" type="text" maxlength="50">
             <br>
-            <label for="correo">Correo</label>
+            <label for="email">Correo</label>
             <input id="correoreg" type="text" name="email" type="email" maxlength="50">
             <br>
-            <label for="contraseña">contraseña</label>
+            <label for="password">contraseña</label>
             <input type="text" id="contraseñareg" name="password">
+            <br>
             <button type="submit">Registrarse</button>
         </form>
         <form action="/" method="GET">
@@ -204,7 +480,7 @@ app.get('/actualizarDatos', validateToken, (req, res) => {
                             <input type="text" id="contraseñareg" value=${usuarioData.pass} name="pass" required minlength="5">
                             <button type="submit">Actualizar datos</button>
                         </form>
-                        <form action="/">
+                        <form action="/logged">
                             <input type="submit" value="Cerrar sesión"/>
                         </form>
                     </body>
@@ -310,8 +586,8 @@ app.get('/panelAdmin', validateToken,(req, res) => {
                             </tr>           
                         </table>
                                     
-                        <form action="/">
-                            <input type="submit" value="Cerrar sesión"/>
+                        <form action="/logged">
+                            <input type="submit" value="Volver"/>
                         </form>
                     </body>
                 </html>
@@ -399,7 +675,7 @@ function generateAccessToken(user){
 
 
 app.post('/auth', (req, res) => {
-    // console.log(req.body);
+     
     const {email, password} = req.body;
     let query = "SELECT * FROM users WHERE correo=? AND pass=?"
     conexionBD.query(query,[email, password],(error, results)=> {
@@ -424,8 +700,9 @@ app.post('/auth', (req, res) => {
                     })
                     //anclar id a sesiones
                     req.session.myId=idconsulta;
-                    
-                    return res.redirect("/actualizarDatos");
+                    //aqui mandamos hacia actualizar datos
+                    //return res.redirect("/actualizarDatos");
+                    return res.redirect("/logged");
                     
                 }
                 else{
@@ -434,26 +711,57 @@ app.post('/auth', (req, res) => {
                 }
                 
             }
-            if(consulta.admin==1){
+            else if(consulta.admin==1){
                 const accessToken = generateAccessToken(user);
                 res.cookie("token", accessToken, {
                     httpOnly: true
                 })
-                
-                return res.redirect("/panelAdmin");
+                return res.redirect("/logged");
+                //return res.redirect("/panelAdmin");
             }
             
         }
         else{
-            res.redirect("/");
+
+            res.redirect("/error");
         }
           } catch (error) {
-            res.redirect("/");
+            res.redirect("/error");
           }
         
       });
     
     
+
+});
+
+app.get('/error', (req, res) => {
+    res.send(`<!DOCTYPE html>
+    <html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Autentificador</title>
+    </head>
+    <body>
+        <h1>Iniciar sesión</h1>
+        <h2>Hubo un error, no existe ese cliente o ingresaste datos de forma erronea.</h2>
+        <div class="div_iniciar">
+            <form action="/auth" method="POST">
+                <label for="correo">Correo</label>
+                <input id="correo" name="email" type="email" maxlength="50" required>
+                <br>
+                <label for="contraseña">contraseña</label>
+                <input type="password" id="contraseña" name="password" type="password" maxlength="50" required> <br>
+                <input type="submit" value="Iniciar sesión"/>
+            </form>
+            
+        </div>
+        <form action="/register">
+            <input type="submit" value="Registrarse"/>
+        </form>
+    </body>
+    </html>`);
 
 });
 
