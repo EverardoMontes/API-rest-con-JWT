@@ -15,13 +15,13 @@ app.use(session({
     saveUninitialized: true
   }));
 
-
+console.log("PEPITOO CONSOLE LOG "+ process.env.DB_DATABASE);
 let mysql = require('mysql2');
 let conexionBD = mysql.createConnection({
-     host: process.env.DB_HOST || 'localhost',
-     database: process.env.DB_DATABASE || 'practica1',
-     user:process.env.DB_USER || 'root',
-     password:process.env.DB_PASS || ''
+     host: process.env.DB_HOST,
+     database: process.env.DB_DATABASE,
+     user:process.env.DB_USER,
+     password:process.env.DB_PASS
 })
 
 conexionBD.connect(function(err){
