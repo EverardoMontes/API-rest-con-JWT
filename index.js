@@ -4,8 +4,11 @@ const app = express();
 const jwt = require('jsonwebtoken');
 const cookieParser = require('cookie-parser');
 const session = require('express-session');
+const bcrypt = require('bcrypt');
 require("dotenv").config({path:'./.env'});
-const rateLimit = require('express-rate-limit');
+//const rateLimit = require('express-rate-limit');
+const CryptoJS = require("crypto-js");
+//const saltRounds = 10;
 app.use(express.urlencoded({ extended:false }));
 app.use(express.json());
 app.use(cookieParser())
@@ -36,6 +39,7 @@ conexionBD.connect(function(err){
 
 });
 app.get('/', (req, res) => {
+
         res.send(`<!DOCTYPE html>
         <html lang="en">
         <head>
@@ -97,6 +101,7 @@ app.get('/logged', validateToken, (req, res) => {
         else if(req.isAdmin==1){
             res.send(`<!DOCTYPE html>
             <html lang="en">
+            <link rel="stylesheet" href=""></link>
             <head>
                 <meta charset="UTF-8">
                 <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -616,12 +621,14 @@ app.post('/registrarse', (req, res) => {
             if(consulta == 0 || consulta==undefined){
                     let query ="INSERT INTO users(nombre, correo, pass, admin, estado) values (?,?,?,0,0)" ;
                     //conexionBD.query("INSERT INTO users(nombre, correo, pass, admin, estado) values ('"+name+"','"+email+"','"+password+"',0,0)", function (error, results, fields) {
-                    conexionBD.query(query,[name, email, password], function (error, results, fields) {
-                        if (error) throw error;
-                        
-                        // AQUI ES DONDE DEBO REDIRECCIONAR HACIA LA PÁGINA PRINCIPAL
-                        res.redirect("/");
-                    })
+                    let hash = CryptoJS.SHA256(password);
+                    conexionBD.query(query,[name, email, hash], function (error, results, fields) {
+                                if (error) throw error;
+                                
+                                // AQUI ES DONDE DEBO REDIRECCIONAR HACIA LA PÁGINA PRINCIPAL
+                                res.redirect("/");
+                            })
+                          
                 }else{
                     res.send(`<!DOCTYPE html>
                     <html lang="en">
@@ -919,7 +926,9 @@ app.post('/auth', (req, res) => {
      
     const {email, password} = req.body;
     let query = "SELECT * FROM users WHERE correo=? AND pass=?"
-    conexionBD.query(query,[email, password],(error, results)=> {
+    let hasheo = CryptoJS.SHA256(password);
+    let hash = hasheo.toString(CryptoJS.enc.Hex)
+    conexionBD.query(query,[email, hash],(error, results)=> {
         if (error){
             console.error('Error:', error);
             return res.status(500).json({ error: 'Error query' });
@@ -976,6 +985,7 @@ app.post('/auth', (req, res) => {
           }
         
       });
+    
     
     
 
