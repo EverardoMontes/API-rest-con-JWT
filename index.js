@@ -11,11 +11,11 @@ app.use(express.json());
 app.use(cookieParser())
 app.use(session({
     secret: process.env.SECRET,
-    resave: false,
+    resave: true,
     saveUninitialized: true
   }));
 
-console.log("PEPITOO CONSOLE LOG "+ process.env.DB_HOST);
+
 let mysql = require('mysql2');
 let conexionBD = mysql.createConnection({
      host: process.env.DB_HOST,
@@ -129,7 +129,7 @@ app.get('/logged', validateToken, (req, res) => {
 
 app.post("/addProducts",validateToken, (req, res) => {
     jwt.verify(req.cookies.token, process.env.SECRET, (err, authData) => {
-        console.log("entramos a addproducts admin es "+req.isAdmin);
+        
         if (err) {
           res.sendStatus(403);
         }
@@ -277,66 +277,304 @@ app.get("/showProducts", validateToken, (req, res) => {
             //console.log('The solution is: ', results[0])
             let productos = results;
             //res.sendFile(__dirname+'/admin.html');
+            let id=req.session.myId;
+            let query="SELECT SUM(cantidadCarrito) AS suma FROM usercart WHERE idUser=?";
+            conexionBD.query(query,[id], function (error, resultados, fields) {
+                if (error) throw error;
+                let id=req.session.myId;
+                let carrito;
+                
+                if(resultados[0].suma==null){
+                    carrito=0;
+                }else{
+                    carrito = resultados[0].suma
+                    
+                }
+
+                res.send(`<!DOCTYPE html>
+                <html lang="en">
+                    <head>
+                        <meta charset="UTF-8">
+                        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                        <title>Productos</title>
+                    </head>
+                    <body>
+                        <h1>Productos en venta en esta tienda</h1>
+                        <table class="default" id="tableUsers" border="3">
+                            <tr>
+                                <th>Id</th>
+                                <th>Nombre del producto</th>
+                                <th>Descripción del producto</th>
+                                <th>Cantidad en existencia</th>
+                                <th>Precio del producto</th>
+                                <th>Imagen del producto</th>
+                                <th>Agregar uno al carrito</th>
+                            </tr>           
+                        </table>
+                        <table class="default" id="cart" border="3" style="display: none;">
+                            <tr>
+                                <th>Id del producto</th>
+                                <th>Nombre del producto</th>
+                                <th>Descripcion del producto</th>
+                                <th>Imagen del producto</th>
+                                <th>Cantidad del producto</th>
+                                <th>Precio del producto</th>
+                            </tr>
+                        </table>
+                                    
+                        <form action="/logged">
+                            <input type="submit" value="Volver"/>
+                        </form>
+                        <form action="/shoppingCart">
+                            <input type="submit" value="Carrito(${carrito})"/>
+                        </form>
+                    </body>
+                </html>
+                <script>
+                
+                    let usrs = ${JSON.stringify(productos)}
+                    let tabla = document.getElementById("tableUsers");
+                    usrs.forEach((element)=>{
+                        let tr = document.createElement('tr');
+                        let tdId = document.createElement('td');
+                        let tdnombre = document.createElement('td');
+                        let tdDesc = document.createElement('td');
+                        let tdCant = document.createElement('td');
+                        let tdPrecio = document.createElement('td');
+                        let tdimage = document.createElement('td');
+                        let image = document.createElement('img');
+                        let tdButton = document.createElement('td');
+                        let buttonAdd = document.createElement('button');
+                        let formAdd = document.createElement('form');
+                        
+                        buttonAdd.name="add";
+                        buttonAdd.value = element.id;
+                        buttonAdd.textContent = "+";
+                        buttonAdd.style="display: inline-block"
+    
+                        formAdd.action="/addCartPrdt"
+                        formAdd.method="POST"
+                        formAdd.appendChild(buttonAdd)
+                        tdButton.appendChild(formAdd);
+    
+    
+                        tdId.textContent = element.id;
+                        tdnombre.textContent = element.nombre;
+                        tdnombre.style="text-align:center"
+                        tdDesc.textContent = element.descripcion;
+                        tdDesc.style="text-align:center"
+                        tdCant.textContent = element.cantidad;
+                        tdCant.style="text-align:center"
+                        tdPrecio.textContent = element.precio;
+                        tdPrecio.style="text-align:center"
+                        image.src = element.imagen;
+                        image.width="200"
+                        image.height="100"
+                        tdButton.style="text-align:center"
+                        tdimage.appendChild(image);
+                        tr.appendChild(tdId);
+                        tr.appendChild(tdnombre);
+                        tr.appendChild(tdDesc);
+                        tr.appendChild(tdCant);
+                        tr.appendChild(tdPrecio);
+                        tr.appendChild(tdimage);
+                        tr.appendChild(tdButton);
+                        tableUsers.appendChild(tr);
+                        })
+                    </script>
+                `);
+                })
+            
+
+        });
+    })
+})
+
+
+app.post("/addCartPrdt", validateToken, (req, res)=>{
+    jwt.verify(req.cookies.token, process.env.SECRET, (err, authData) => {
+        if (err) {
+          res.sendStatus(403);
+        }
+        else{
+            let id=req.session.myId;
+            
+            let idProduct = req.body.add;
+            let query ="SELECT cantidadCarrito FROM usercart WHERE idUser =? AND producto=?";
+            //conexionBD.query("UPDATE users SET estado ="+state+" WHERE id="+id+";", function (error, results, fields) {
+            conexionBD.query(query,[id,idProduct], function (error, results, fields) {
+                 if (error) throw error;
+                 let cantidad = results;
+                 if(cantidad.length==0){
+                    
+                    
+                    let query ="INSERT INTO usercart (producto, cantidadCarrito,idUser) values (?,1,?)";
+                    conexionBD.query(query,[idProduct,id], function (error, results, fields) {
+                        if (error) {throw error};
+                        return res.redirect('/showProducts')});
+                 }
+                 else if(cantidad.length!=0){
+                    let query ="UPDATE usercart SET cantidadCarrito = cantidadCarrito + 1 WHERE producto =? AND idUser =?";
+                    conexionBD.query(query,[idProduct,id], function (error, results, fields) {
+                        if (error) {throw error};
+                        return res.redirect('/showProducts')});
+                 }
+
+                 
+            
+        })
+}});
+
+})
+
+
+
+app.get("/shoppingCart", validateToken, (req, res)=>{
+    jwt.verify(req.cookies.token, process.env.SECRET, (err, authData) => {
+        if (err) {
+          res.sendStatus(403);
+        }
+        let id = req.session.myId;
+        let query ="SELECT p.imagen, p.nombre, p.precio, p.id, s.cantidadCarrito FROM productos AS p JOIN usercart AS s ON p.id = s.producto WHERE s.idUser = ?;"
+        conexionBD.query(query,[id], function (error, results, fields) {
+            if (error) {throw error};
+            //console.log('The solution is: ', results[0])
+            let usuarios = results;
+            //res.sendFile(__dirname+'/admin.html');
             res.send(`<!DOCTYPE html>
             <html lang="en">
                 <head>
                     <meta charset="UTF-8">
                     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-                    <title>Productos</title>
+                    <title>Registrarse</title>
                 </head>
                 <body>
-                    <h1>Productos en venta en esta tienda</h1>
+                    <h1>Carrito de compras :D</h1>
                     <table class="default" id="tableUsers" border="3">
                         <tr>
-                            <th>Id</th>
+                            <th>Imágen del producto</th>
                             <th>Nombre del producto</th>
-                            <th>Descripción del producto</th>
-                            <th>Cantidad en existencia</th>
-                            <th>Precio del producto</th>
-                            <th>Imagen del producto</th>
-                        </tr>           
-                    </table>
-                                
-                    <form action="/logged">
+                            <th>Precio</th>
+                            <th>Eliminar uno</th>
+                            <th>Cantidad</th>
+                            <th>Añadir uno</th>
+                        </tr>
+                        </table>
+                        
+                        <p id="total"></p>           
+                    <form action="/showProducts">
                         <input type="submit" value="Volver"/>
+                    </form>
+                    <form 
+                    //action="/showProducts"
+                    >
+                        <input type="submit" value="Comprar productos"/>
                     </form>
                 </body>
             </html>
             <script>
-                let usrs = ${JSON.stringify(productos)}
+                let usrs = ${JSON.stringify(usuarios)   }
                 let tabla = document.getElementById("tableUsers");
+                let total = 0
                 usrs.forEach((element)=>{
+                    console.log(element)
                     let tr = document.createElement('tr');
-                    let tdId = document.createElement('td');
+                    let tdImage = document.createElement('td');
                     let tdnombre = document.createElement('td');
-                    let tdDesc = document.createElement('td');
-                    let tdCant = document.createElement('td');
+                    tdnombre.style="text-align:center"
                     let tdPrecio = document.createElement('td');
-                    let tdimage = document.createElement('td');
+                    tdPrecio.style="text-align:center"
+                    let tdAdd = document.createElement('td');
+                    tdAdd.style="text-align:center"
+                    let tdCuant = document.createElement('td');
+                    tdCuant.style="text-align:center"
+                    let tdDel = document.createElement('td');
+                    tdDel.style="text-align:center"
+
                     let image = document.createElement('img');
-                    tdId.textContent = element.id;
-                    tdnombre.textContent = element.nombre;
-                    tdDesc.textContent = element.descripcion;
-                    tdCant.textContent = element.cantidad;
-                    tdPrecio.textContent = element.precio;
                     image.src = element.imagen;
                     image.width="200"
                     image.height="100"
-                    tdimage.appendChild(image);
-                    tr.appendChild(tdId);
+
+                    tdImage.appendChild(image);
+                    tdnombre.textContent = element.nombre;
+                    tdPrecio.textContent = element.precio;
+                    tdCuant.textContent = element.cantidadCarrito;
+
+                    let botonAdd = document.createElement('button');
+                    botonAdd.textContent = '+';
+                    botonAdd.value = element.id;
+                    botonAdd.style="display: inline-block"
+                    botonAdd.name="sumar";
+                    
+
+                    let botonDel = document.createElement('button');
+                    botonDel.textContent = '-';
+                    botonDel.value = element.id
+                    botonDel.style="display: inline-block"
+                    botonDel.name="restar"
+                    
+                    
+                    let formAdd = document.createElement('form');
+                    formAdd.action="/shoppingAdd";
+                    formAdd.method="POST";
+                    formAdd.appendChild(botonAdd);
+                    
+                    let formDel = document.createElement('form');
+                    formDel.action="/shoppinDel";
+                    formDel.method="POST";
+                    formDel.appendChild(botonDel);
+                      
+                    tdAdd.appendChild(formAdd);
+                    tdDel.appendChild(formDel);
+
+                    tr.appendChild(tdImage);
                     tr.appendChild(tdnombre);
-                    tr.appendChild(tdDesc);
-                    tr.appendChild(tdCant);
                     tr.appendChild(tdPrecio);
-                    tr.appendChild(tdimage);
+                    tr.appendChild(tdDel);
+                    tr.appendChild(tdCuant);
+                    tr.appendChild(tdAdd);
                     tableUsers.appendChild(tr);
+                    if(element.cantidadCarrito==0){
+                        tableUsers.removeChild(tableUsers.lastChild);
+                    }
+                    let cantidadDinero = element.cantidadCarrito * element.precio;
+                    total+= cantidadDinero;
                     })
+                    let cantidad = document.getElementById('total').textContent = "Tu total a pagar es: $"+total;
                 </script>
             `);
-
-        });
+        })
     })
-})
+});
+
+app.post('/shoppingAdd', validateToken, (req, res)=>{
+    jwt.verify(req.cookies.token, process.env.SECRET, (err, authData) => {
+        if (err) {
+          res.sendStatus(403);
+        }
+        let id = req.session.myId;
+        let idProduct = req.body.sumar
+        let query ="UPDATE usercart SET cantidadCarrito = cantidadCarrito + 1 WHERE producto =? AND idUser =?";
+        conexionBD.query(query,[idProduct,id], function (error, results, fields) {
+            if (error) {throw error};
+            return res.redirect('/shoppingCart')});
+    })
+    });
+
+app.post('/shoppinDel', validateToken, (req, res)=>{
+    jwt.verify(req.cookies.token, process.env.SECRET, (err, authData) => {
+        if (err) {
+          res.sendStatus(403);
+        }
+        let id = req.session.myId;
+        let idProduct = req.body.restar
+        let query ="UPDATE usercart SET cantidadCarrito = cantidadCarrito - 1 WHERE producto =? AND idUser =?";
+        conexionBD.query(query,[idProduct,id], function (error, results, fields) {
+            if (error) {throw error};
+            return res.redirect('/shoppingCart')});
+    })
+    });
 
 app.get('/register', (req, res) => {
     res.send(`<!DOCTYPE html>
@@ -702,7 +940,11 @@ app.post('/auth', (req, res) => {
                         httpOnly: true
                     })
                     //anclar id a sesiones
-                    req.session.myId=idconsulta;
+                    
+                    req.session.myId = idconsulta;
+                    req.session.save(function(err) {
+                    // session saved
+                    })
                     //aqui mandamos hacia actualizar datos
                     //return res.redirect("/actualizarDatos");
                     return res.redirect("/logged");
@@ -719,6 +961,7 @@ app.post('/auth', (req, res) => {
                 res.cookie("token", accessToken, {
                     httpOnly: true
                 })
+                req.session.myId = idconsulta;
                 return res.redirect("/logged");
                 //return res.redirect("/panelAdmin");
             }
