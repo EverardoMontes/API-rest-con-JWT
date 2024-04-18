@@ -9,6 +9,7 @@ require("dotenv").config({path:'./.env'});
 //const rateLimit = require('express-rate-limit');
 const CryptoJS = require("crypto-js");
 //const saltRounds = 10;
+app.use(express.static('public'));
 app.use(express.urlencoded({ extended:false }));
 app.use(express.json());
 app.use(cookieParser())
@@ -45,23 +46,24 @@ app.get('/', (req, res) => {
         <head>
             <meta charset="UTF-8">
             <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
             <title>Autentificador</title>
         </head>
         <body>
             <h1>Iniciar sesión</h1>
-            <div class="div_iniciar">
+            <div>
                 <form action="/auth" method="POST">
-                    <label for="correo">Correo</label>
-                    <input id="correo" name="email" type="email" maxlength="50" required>
+                    <label for="correo" class="form-label">Correo</label>
+                    <input id="correo" name="email" class="form-control" type="email" maxlength="50" required>
                     <br>
-                    <label for="contraseña">contraseña</label>
-                    <input type="password" id="contraseña" name="password" type="password" maxlength="50" required> <br>
-                    <input type="submit" value="Iniciar sesión"/>
+                    <label for="contraseña" class="form-label">contraseña</label>
+                    <input type="password" class="form-control" id="contraseña" name="password" type="password" maxlength="50" required> <br>
+                    <input type="submit" class="btn btn-primary" value="Iniciar sesión"/>
                 </form>
                 
             </div>
             <form action="/register">
-                <input type="submit" value="Registrarse"/>
+                <input type="submit" class="btn btn-secondary" value="Registrarse"/>
             </form>
         </body>
         </html>`);
