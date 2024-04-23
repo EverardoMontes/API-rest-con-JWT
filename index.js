@@ -623,7 +623,8 @@ app.post('/registrarse', (req, res) => {
             if(consulta == 0 || consulta==undefined){
                     let query ="INSERT INTO users(nombre, correo, pass, admin, estado) values (?,?,?,0,0)" ;
                     //conexionBD.query("INSERT INTO users(nombre, correo, pass, admin, estado) values ('"+name+"','"+email+"','"+password+"',0,0)", function (error, results, fields) {
-                    let hash = CryptoJS.SHA256(password);
+                        let hasheo = CryptoJS.SHA256(password);
+                        let hash = hasheo.toString(CryptoJS.enc.Hex)
                     conexionBD.query(query,[name, email, hash], function (error, results, fields) {
                                 if (error) throw error;
                                 
