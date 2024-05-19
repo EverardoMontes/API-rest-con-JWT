@@ -50,21 +50,23 @@ app.get('/', (req, res) => {
             <title>Autentificador</title>
         </head>
         <body>
+        <div class="container" style="width:25%; margin-top:50px">
             <h1>Iniciar sesión</h1>
             <div>
                 <form action="/auth" method="POST">
-                    <label for="correo" class="form-label">Correo</label>
-                    <input id="correo" name="email" class="form-control" type="email" maxlength="50" required>
+                    <label class="form-label" for="correo" >Correo</label>
+                    <input class="form-control" id="correo" name="email" class="form-control" type="email" maxlength="50" required>
                     <br>
-                    <label for="contraseña" class="form-label">contraseña</label>
-                    <input type="password" class="form-control" id="contraseña" name="password" type="password" maxlength="50" required> <br>
-                    <input type="submit" class="btn btn-primary" value="Iniciar sesión"/>
+                    <label class="form-label" for="contraseña">contraseña</label>
+                    <input class="form-control" type="password" class="form-control" id="contraseña" name="password" type="password" maxlength="50" required> <br>
+                    <input class="btn btn-primary" type="submit" class="btn btn-primary" value="Iniciar sesión"/>
                 </form>
                 
             </div>
             <form action="/register">
-                <input type="submit" class="btn btn-secondary" value="Registrarse"/>
+                <input class="btn btn-primary" type="submit" class="btn btn-secondary" value="Registrarse"/>
             </form>
+        </div>
         </body>
         </html>`);
     
@@ -82,18 +84,20 @@ app.get('/logged', validateToken, (req, res) => {
                 <meta charset="UTF-8">
                 <meta name="viewport" content="width=device-width, initial-scale=1.0">
                 <title>Cliente</title>
+                            <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
+                <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
             </head>
             <body>
                 <h1>Sesión de cliente</h1>
                 <div class="div_iniciar">
                     <form action="/actualizarDatos" method="GET">
-                        <input type="submit" value="Actualizar datos"/>
+                        <input class="btn btn-primary" type="submit" value="Actualizar datos"/>
                     </form>
                     <form action="/showProducts" method="GET">
-                        <input type="submit" value="Ver productos a la venta"/>
+                        <input class="btn btn-primary" type="submit" value="Ver productos a la venta"/>
                     </form>
                     <form action="/">
-                            <input type="submit" value="Cerrar sesión"/>
+                            <input class="btn btn-primary" type="submit" value="Cerrar sesión"/>
                         </form>
                     
                 </div>
@@ -108,21 +112,23 @@ app.get('/logged', validateToken, (req, res) => {
                 <meta charset="UTF-8">
                 <meta name="viewport" content="width=device-width, initial-scale=1.0">
                 <title>Administrador</title>
+                            <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
+                <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
             </head>
             <body>
                 <h1>Sesión de administrador</h1>
                 <div class="div_iniciar">
                     <form action="/panelAdmin" method="GET">
-                        <input type="submit" value="Panel de Administrador"/>
+                        <input class="btn btn-primary" type="submit" value="Panel de Administrador"/>
                     </form>
                     <form action="/addProducts" method="POST">
-                        <input type="submit" value="Introducir un producto"/>
+                        <input class="btn btn-primary" type="submit" value="Introducir un producto"/>
                     </form>
                     <form action="/showProducts" method="GET">
-                        <input type="submit" value="Ver productos a la venta"/>
+                        <input class="btn btn-primary" type="submit" value="Ver productos a la venta"/>
                     </form>
                     <form action="/">
-                            <input type="submit" value="Cerrar sesión"/>
+                            <input class="btn btn-primary" type="submit" value="Cerrar sesión"/>
                         </form>
                     
                 </div>
@@ -143,43 +149,44 @@ app.post("/addProducts",validateToken, (req, res) => {
 
         else if(req.isAdmin==1){
             res.send(`<!DOCTYPE html>
-                <html lang="en">
-                <head>
-                    <meta charset="UTF-8">
-                    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-                    <title>Añadir producto</title>
-                </head>
-                <body>
-                    <h1>Añadir un producto</h1>
-                    <form action="/addProductMethod" method="POST">
-                        <label for="nombreProducto">Nombre del producto</label>
-                        <input type="text" id="producName" name="nombreProducto" type="text" maxlength="50" placeholder="Plátano">
-                        <br>
-                        <label for="descripcionProducto">Descripción del producto</label>
-                        <input id="producDesc" type="text" name="descripcionProducto" type="email" maxlength="300" placeholder="Amarillo, largo y pelable">
-                        <br>
-                        <label for="cantidadProducto">Cantidad de este producto</label>
-                        <input type="number" id="producCuant" name="cantidadProducto" placeholder="50">
-                        <br>
-                        <label for="precioProducto">Precio que tendrá el producto</label>
-                        <input type="number" id="productPrice" name="precioProducto" placeholder="20">
-                        <br>
-                        <label for="imagenProducto">Imagen que tendrá el producto</label>
-                        <input type="url" id="producImage" name="imagenProducto" placeholder="https://www.google.com/PlatanoImage" size="30">
-                        <br>
-                        <button type="submit">Registrar el producto</button>
-                    </form>
-                    <form action="/logged" method="GET">
-                    <button type="submit">Volver</button>
-                    </form>
-                </body>
-                </html>`);
+            <html lang="en">
+            <head>
+                <meta charset="UTF-8">
+                <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                <title>Añadir producto</title>
+                <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
+            </head>
+            <body>
+                <h1>Añadir un producto</h1>
+                <form action="/addProductMethod" method="POST">
+                    <label class="form-label" for="nombreProducto">Nombre del producto</label>
+                    <input class="form-control" type="text" id="producName" name="nombreProducto" type="text" maxlength="50" placeholder="Plátano">
+                    <br>
+                    <label class="form-label" for="descripcionProducto">Descripción del producto</label>
+                    <input class="form-control" id="producDesc" type="text" name="descripcionProducto" type="email" maxlength="300" placeholder="Amarillo, largo y pelable">
+                    <br>
+                    <label class="form-label" for="cantidadProducto">Cantidad de este producto</label>
+                    <input class="form-control" type="number" id="producCuant" name="cantidadProducto" placeholder="50">
+                    <br>
+                    <label class="form-label" for="precioProducto">Precio que tendrá el producto</label>
+                    <input class="form-control" type="number" id="productPrice" name="precioProducto" placeholder="20">
+                    <br>
+                    <label class="form-label" for="imagenProducto">Imagen que tendrá el producto</label>
+                    <input class="form-control" type="url" id="producImage" name="imagenProducto" placeholder="https://www.google.com/PlatanoImage" size="30">
+                    <button class="btn btn-primary" type="submit">Registrar el producto</button>
+                </form>
+                <form action="/logged"> 
+                <button class="btn btn-primary" type="submit">Volver</button>
+                </form>
+            </body>
+            </html>`);
         }
     })
 })
 
 app.post('/addProductMethod',  (req, res) => {
     const {nombreProducto, descripcionProducto, cantidadProducto,precioProducto,imagenProducto} = req.body;
+    console.log(JSON.stringify(req.body))
     let consulta;
     if (cantidadProducto == Number && precioProducto == Number && nombreProducto != null && descripcionProducto != null && cantidadProducto != null && precioProducto != null && imagenProducto != null && nombreProducto != "" && descripcionProducto != "" && cantidadProducto != "" && precioProducto != "" && imagenProducto != ""){
         if(true){
@@ -238,38 +245,38 @@ app.post('/addProductMethod',  (req, res) => {
             
         else{
             res.send(`<!DOCTYPE html>
-                        <html lang="en">
-                        <head>
-                            <meta charset="UTF-8">
-                            <meta name="viewport" content="width=device-width, initial-scale=1.0">
-                            <title>Registrarse</title>
-                        </head>
-                        <body>
-                        <h1>Añadir un producto</h1>
-                        <form action="/addProductMethod" method="POST">
-                            <label for="nombreProducto">Nombre del producto</label>
-                            <input type="text" id="producName" name="nombreProducto" type="text" maxlength="50" placeholder="Plátano">
-                            <br>
-                            <label for="descripcionProducto">Descripción del producto</label>
-                            <input id="producDesc" type="text" name="descripcionProducto" type="email" maxlength="300" placeholder="Amarillo, largo y pelable">
-                            <br>
-                            <label for="cantidadProducto">Cantidad de este producto</label>
-                            <input type="number" id="producCuant" name="cantidadProducto" placeholder="50">
-                            <br>
-                            <label for="precioProducto">Precio que tendrá el producto</label>
-                            <input type="number" id="productPrice" name="precioProducto" placeholder="20">
-                            <br>
-                            <label for="imagenProducto">Imagen que tendrá el producto</label>
-                            <input type="url" id="producImage" name="imagenProducto" placeholder="www.google.com/PlatanoImage" size="30">
-                            <br>
-                            <button type="submit">Registrar el producto</button>
-                        </form>
-                            <h2>HAY ALGÚN CAMPO EN BLANCO!</h2>
-                            <form action="/logged" method="GET">
-                                <button type="submit">Volver</button>
-                            </form>
-                        </body>
-                        </html>`);
+            <html lang="en">
+            <head>
+                <meta charset="UTF-8">
+                <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                <titl>Registrarse</title>
+                <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
+            </head>
+            <body>
+            <h1>Añadir un producto</h1>
+            <form action="/addProductMethod" method="POST">
+                <label class="form-label" for="nombreProducto">Nombre del producto</label>
+                <input class="form-control" type="text" id="producName" name="nombreProducto" type="text" maxlength="50" placeholder="Plátano">
+                <br>
+                <label class="form-label" for="descripcionProducto">Descripción del producto</label>
+                <input class="form-control" id="producDesc" type="text" name="descripcionProducto" type="email" maxlength="300" placeholder="Amarillo, largo y pelable">
+                <br>
+                <label class="form-label" for="cantidadProducto">Cantidad de este producto</label>
+                <input class="form-control" type="number" id="producCuant" name="cantidadProducto" placeholder="50">
+                <br>
+                <label class="form-label" for="precioProducto">Precio que tendrá el producto</label>
+                <input class="form-control" type="number" id="productPrice" name="precioProducto" placeholder="20">
+                <br>
+                <label class="form-label" for="imagenProducto">Imagen que tendrá el producto</label>
+                <input class="form-control" type="url" id="producImage" name="imagenProducto" placeholder="www.google.com/PlatanoImage" size="30">
+            <button class="btn btn-primary" type="submit">Registrar el producto</button>
+            </form>
+                <h2>HAY ALGÚN CAMPO EN BLANCO!</h2>
+                <form action="/logged"> 
+                    <button class="btn btn-pri" type="submit">Volver</button>
+                </form>
+            </body>
+            </html>`);
         }
         
         });
@@ -303,11 +310,12 @@ app.get("/showProducts", validateToken, (req, res) => {
                     <head>
                         <meta charset="UTF-8">
                         <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                        <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
                         <title>Productos</title>
                     </head>
                     <body>
                         <h1>Productos en venta en esta tienda</h1>
-                        <table class="default" id="tableUsers" border="3">
+                        <table class="table table-bordered" id="tableUsers" border="3">
                             <tr>
                                 <th>Id</th>
                                 <th>Nombre del producto</th>
@@ -318,7 +326,7 @@ app.get("/showProducts", validateToken, (req, res) => {
                                 <th>Agregar uno al carrito</th>
                             </tr>           
                         </table>
-                        <table class="default" id="cart" border="3" style="display: none;">
+                        <table class="table table-bordered" id="cart" border="3" style="display: none;">
                             <tr>
                                 <th>Id del producto</th>
                                 <th>Nombre del producto</th>
@@ -329,11 +337,11 @@ app.get("/showProducts", validateToken, (req, res) => {
                             </tr>
                         </table>
                                     
-                        <form action="/logged">
-                            <input type="submit" value="Volver"/>
-                        </form>
                         <form action="/shoppingCart">
-                            <input type="submit" value="Carrito(${carrito})"/>
+                            <input type="submit" class="btn btn-success" value="Carrito(${carrito})"/>
+                        </form>
+                        <form action="/logged">
+                            <input type="submit" class="btn btn-danger" value="Volver"/>
                         </form>
                     </body>
                 </html>
@@ -453,11 +461,13 @@ app.get("/shoppingCart", validateToken, (req, res)=>{
                 <head>
                     <meta charset="UTF-8">
                     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
+
                     <title>Registrarse</title>
                 </head>
                 <body>
                     <h1>Carrito de compras :D</h1>
-                    <table class="default" id="tableUsers" border="3">
+                    <table class="table table-bordered" id="tableUsers" border="3">
                         <tr>
                             <th>Imágen del producto</th>
                             <th>Nombre del producto</th>
@@ -469,13 +479,11 @@ app.get("/shoppingCart", validateToken, (req, res)=>{
                         </table>
                         
                         <p id="total"></p>           
-                    <form action="/showProducts">
-                        <input type="submit" value="Volver"/>
+                    <form action="/buy">
+                            <input type="submit" class="btn btn-success" value="Comprar productos"/>
                     </form>
-                    <form 
-                    //action="/showProducts"
-                    >
-                        <input type="submit" value="Comprar productos"/>
+                    <form action="/showProducts">
+                        <input type="submit" class="btn btn-danger" value="Volver"/>
                     </form>
                 </body>
             </html>
@@ -554,6 +562,17 @@ app.get("/shoppingCart", validateToken, (req, res)=>{
         })
     })
 });
+app.post('/buy', validateToken, (req, res)=>{
+    //AQUI SE COMPRAN LAS COSAS
+    jwt.verify(req.cookies.token, process.env.SECRET, (err, authData) => {
+        if (err) {
+          res.sendStatus(403);
+        }
+        let id = req.session    .myId;
+        let idProduct = req.body.sumar
+        let query ="UPDATE usercart SET cantidadCarrito = cantidadCarrito + 1 WHERE producto =? AND idUser =?";
+    })
+    });
 
 app.post('/shoppingAdd', validateToken, (req, res)=>{
     jwt.verify(req.cookies.token, process.env.SECRET, (err, authData) => {
@@ -589,21 +608,22 @@ app.get('/register', (req, res) => {
     <head>
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
         <title>Registrarse</title>
     </head>
     <body>
         <h1>Registrate</h1>
         <form action="/registrarse" method="POST">
-            <label for="name">Nombre</label>
-            <input type="text" id="nombrereg" name="name" type="text" maxlength="50">
+            <label class="form-label" for="name">Nombre</label>
+            <input class="form-control" type="text" id="nombrereg" name="name" type="text" maxlength="50">
             <br>
-            <label for="email">Correo</label>
-            <input id="correoreg" type="text" name="email" type="email" maxlength="50">
+            <label class="form-label" for="email">Correo</label>
+            <input  class="form-control" id="correoreg" type="text" name="email" type="email" maxlength="50">
             <br>
-            <label for="password">contraseña</label>
-            <input type="text" id="contraseñareg" name="password">
+            <label class="form-label" for="password">contraseña</label>
+            <input  class="form-control" type="text" id="contraseñareg" name="password">
             <br>
-            <button type="submit">Registrarse</button>
+            <button type="submit" class="btn btn-primary">Registrarse</button>
         </form>
         <form action="/" method="GET">
         <button type="submit">Volver</button>
@@ -822,11 +842,12 @@ app.get('/panelAdmin', validateToken,(req, res) => {
                     <head>
                         <meta charset="UTF-8">
                         <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                        <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
                         <title>Registrarse</title>
                     </head>
                     <body>
                         <h1>ESTE ES EL PANEL DE ADMINISTRADOR</h1>
-                        <table class="default" id="tableUsers">
+                        <table class="table table-bordered" id="tableUsers">
                             <tr>
                                 <th>Id</th>
                                 <th>Nombre de usuario</th>
@@ -838,7 +859,7 @@ app.get('/panelAdmin', validateToken,(req, res) => {
                         </table>
                                     
                         <form action="/logged">
-                            <input type="submit" value="Volver"/>
+                            <input type="submit" class="btn btn-danger" value="Volver"/>
                         </form>
                     </body>
                 </html>
@@ -861,12 +882,14 @@ app.get('/panelAdmin', validateToken,(req, res) => {
 
                         let boton1 = document.createElement('button');
                         boton1.textContent = 'Activar';
+                        boton1.className = 'btn btn-primary';
                         boton1.value = element.id;
                         boton1.name="activar";
                         
 
                         let boton2 = document.createElement('button');
                         boton2.textContent = 'Desactivar';
+                        boton2.className='btn btn-secondary';
                         boton2.value = element.id
                         boton2.name="desactivar"
                         
