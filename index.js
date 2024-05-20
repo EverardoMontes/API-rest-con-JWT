@@ -188,7 +188,7 @@ app.post('/addProductMethod',  (req, res) => {
     const {nombreProducto, descripcionProducto, cantidadProducto,precioProducto,imagenProducto} = req.body;
     console.log(JSON.stringify(req.body))
     let consulta;
-    if (cantidadProducto == Number && precioProducto == Number && nombreProducto != null && descripcionProducto != null && cantidadProducto != null && precioProducto != null && imagenProducto != null && nombreProducto != "" && descripcionProducto != "" && cantidadProducto != "" && precioProducto != "" && imagenProducto != ""){
+    if (!isNaN(cantidadProducto) && !isNaN(precioProducto) && nombreProducto != null && descripcionProducto != null && cantidadProducto != null && precioProducto != null && imagenProducto != null && nombreProducto != "" && descripcionProducto != "" && cantidadProducto != "" && precioProducto != "" && imagenProducto != ""){
         if(true){
             let query="SELECT * FROM productos WHERE nombre=?";
         conexionBD.query(query,[nombreProducto], function (error, results, fields) {
@@ -479,7 +479,7 @@ app.get("/shoppingCart", validateToken, (req, res)=>{
                         </table>
                         
                         <p id="total"></p>           
-                    <form action="/buy">
+                    <form action="/buy" method="POST">
                             <input type="submit" class="btn btn-success" value="Comprar productos"/>
                     </form>
                     <form action="/showProducts">
@@ -562,17 +562,74 @@ app.get("/shoppingCart", validateToken, (req, res)=>{
         })
     })
 });
-app.post('/buy', validateToken, (req, res)=>{
-    //AQUI SE COMPRAN LAS COSAS
-    jwt.verify(req.cookies.token, process.env.SECRET, (err, authData) => {
-        if (err) {
-          res.sendStatus(403);
+
+app.post('/buy', validateToken, (req, res) => {
+    let userId = req.session.myId;
+
+    // Paso 1: Obtener los productos del carrito del usuario
+    const queryCart = `SELECT producto, cantidadCarrito FROM usercart WHERE idUser = ?`;
+    conexionBD.query(queryCart, [userId], (error, cartItems) => {
+        if (error) {
+            console.error("Error fetching cart items:", error);
+            return res.status(500).send("Internal Server Error");
         }
-        let id = req.session    .myId;
-        let idProduct = req.body.sumar
-        let query ="UPDATE usercart SET cantidadCarrito = cantidadCarrito + 1 WHERE producto =? AND idUser =?";
-    })
+
+        if (cartItems.length === 0) {
+            return res.status(400).send("No items in cart to buy");
+        }
+
+        // Paso 2: Procesar cada artículo en el carrito
+        const updatePromises = cartItems.map(item => {
+            return new Promise((resolve, reject) => {
+                // Paso 3: Obtener el producto correspondiente de la base de datos
+                const queryProduct = `SELECT cantidad FROM productos WHERE id = ?`;
+                conexionBD.query(queryProduct, [item.producto], (error, productResults) => {
+                    if (error) {
+                        console.error("Error fetching product:", error);
+                        return reject("Error fetching product");
+                    }
+
+                    if (productResults.length === 0) {
+                        return reject("Product not found");
+                    }
+
+                    let productQuantity = productResults[0].cantidad;
+                    let newQuantity = productQuantity - item.cantidadCarrito;
+
+                    // Paso 4: Actualizar la cantidad del producto en la base de datos
+                    const updateProduct = `UPDATE productos SET cantidad = ? WHERE id = ?`;
+                    conexionBD.query(updateProduct, [newQuantity, item.producto], (error, results) => {
+                        if (error) {
+                            console.error("Error updating product quantity:", error);
+                            return reject("Error updating product quantity");
+                        }
+
+                        // Paso 5: Vaciar la cantidad del producto en el carrito del usuario
+                        const clearCartItem = `UPDATE usercart SET cantidadCarrito = 0 WHERE idUser = ? AND producto = ?`;
+                        conexionBD.query(clearCartItem, [userId, item.producto], (error, results) => {
+                            if (error) {
+                                console.error("Error clearing cart item quantity:", error);
+                                return reject("Error clearing cart item quantity");
+                            }
+
+                            resolve();
+                        });
+                    });
+                });
+            });
+        });
+
+        // Esperar a que todas las promesas se resuelvan
+        Promise.all(updatePromises)
+            .then(() => {
+                return res.redirect("/showProducts");
+            })
+            .catch((error) => {
+                console.error("Error during purchase process:", error);
+                res.status(500).send("Internal Server Error");
+            });
     });
+});
 
 app.post('/shoppingAdd', validateToken, (req, res)=>{
     jwt.verify(req.cookies.token, process.env.SECRET, (err, authData) => {
